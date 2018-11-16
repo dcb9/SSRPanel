@@ -38,18 +38,107 @@ class PaymentController extends Controller
         $goods_id = intval($request->get('goods_id'));
         $coupon_sn = $request->get('coupon_sn');
 
+        $payment_type = $request->get('payment_type');
+        // set youzan as a default payment type
+        $payment_type = $payment_type ? $payment_type : 'youzan';
+
+        $createPaymentMethod = "createYzyPayment";
+        $successReturnValueFunc = function ($payment) {
+            return $payment->sn;
+        };
+
+        switch($payment_type) {
+            case 'youzan':
+                // 判断系统是否开启有赞云支付
+                if (!self::$systemConfig['is_youzan']) {
+                    return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：系统并未开启在线支付功能']);
+                }
+                break;
+            case 'stripe':
+                $createPaymentMethod = "createStripePayment";
+                $successReturnValueFunc = function ($payment) {
+                    return [
+                        'amount' => intval($payment->amount * 100),
+                        'email' => Auth::user()->username,
+                        'sn' => $payment->sn,
+                    ];
+                };
+                break;
+            default:
+                return Response::json(['status' => 'fail', 'data' => '', 'message' => 'Invalid payment type']);
+        }
+
+        $coupon = null;
+        // 使用优惠券
+        if ($coupon_sn) {
+            $coupon = Coupon::query()->where('status', 0)->where('is_del', 0)->whereIn('type', [1, 2])->where('sn', $coupon_sn)->first();
+            if (!$coupon) {
+                return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：优惠券不存在']);
+            }
+        }
+
         $goods = Goods::query()->where('is_del', 0)->where('status', 1)->where('id', $goods_id)->first();
+        $res = $this->validatePayment($goods, $coupon);
+        if ($res !== true) {
+            return $res;
+        }
+
+        $amount = $this->getPaymentAmount($goods, $coupon);
+
+        DB::beginTransaction();
+        try {
+            $orderSn = date('ymdHis') . mt_rand(100000, 999999);
+            $sn = makeRandStr(12);
+
+            // 生成订单
+            $order = new Order();
+            $order->order_sn = $orderSn;
+            $order->user_id = Auth::user()->id;
+            $order->goods_id = $goods_id;
+            $order->coupon_id = !empty($coupon) ? $coupon->id : 0;
+            $order->origin_amount = $goods->price;
+            $order->amount = $amount;
+            $order->expire_at = date("Y-m-d H:i:s", strtotime("+" . $goods->days . " days"));
+            $order->is_expire = 0;
+            $order->pay_way = 2;
+            $order->status = 0;
+            $order->save();
+
+            $payment = $this->$createPaymentMethod($goods, $amount, $sn, $order, $orderSn);
+
+            // 优惠券置为已使用
+            if (!empty($coupon)) {
+                if ($coupon->usage == 1) {
+                    $coupon->status = 1;
+                    $coupon->save();
+                }
+
+                Helpers::addCouponLog($coupon->id, $goods_id, $order->oid, $payment->getPayWayLabelAttribute() + '支付使用');
+            }
+
+            DB::commit();
+
+            return Response::json([
+                'status' => 'success',
+                'data' => $successReturnValueFunc($payment),
+                'message' => '创建订单成功，正在转到付款页面，请稍后'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('创建支付订单失败：' . $e->getMessage());
+
+            return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建订单失败：' . $e->getMessage()]);
+        }
+    }
+
+    protected function validatePayment($goods, $coupon) {
         if (!$goods) {
             return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：商品或服务已下架']);
         }
 
-        // 判断是否开启有赞云支付
-        if (!self::$systemConfig['is_youzan']) {
-            return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：系统并未开启在线支付功能']);
-        }
-
         // 判断是否存在同个商品的未支付订单
-        $existsOrder = Order::query()->where('status', 0)->where('user_id', Auth::user()->id)->where('goods_id', $goods_id)->exists();
+        $existsOrder = Order::query()->where('status', 0)->where('user_id', Auth::user()->id)->where('goods_id', $goods->id)->exists();
         if ($existsOrder) {
             return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：尚有未支付的订单，请先去支付']);
         }
@@ -57,7 +146,7 @@ class PaymentController extends Controller
         // 限购控制
         $strategy = self::$systemConfig['goods_purchase_limit_strategy'];
         if ($strategy == 'all' || ($strategy == 'package' && $goods->type == 2) || ($strategy == 'free' && $goods->price == 0) || ($strategy == 'package&free' && ($goods->type == 2 || $goods->price == 0))) {
-            $noneExpireOrderExist = Order::query()->where('status', '>=', 0)->where('is_expire', 0)->where('user_id', Auth::user()->id)->where('goods_id', $goods_id)->exists();
+            $noneExpireOrderExist = Order::query()->where('status', '>=', 0)->where('is_expire', 0)->where('user_id', Auth::user()->id)->where('goods_id', $goods->id)->exists();
             if ($noneExpireOrderExist) {
                 return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：商品不可重复购买']);
             }
@@ -65,30 +154,16 @@ class PaymentController extends Controller
 
         // 单个商品限购
         if ($goods->is_limit == 1) {
-            $noneExpireOrderExist = Order::query()->where('status', '>=', 0)->where('user_id', Auth::user()->id)->where('goods_id', $goods_id)->exists();
+            $noneExpireOrderExist = Order::query()->where('status', '>=', 0)->where('user_id', Auth::user()->id)->where('goods_id', $goods->id)->exists();
             if ($noneExpireOrderExist) {
                 return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：此商品每人限购1次']);
             }
         }
 
-        // 使用优惠券
-        if ($coupon_sn) {
-            $coupon = Coupon::query()->where('status', 0)->where('is_del', 0)->whereIn('type', [1, 2])->where('sn', $coupon_sn)->first();
-            if (!$coupon) {
-                return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：优惠券不存在']);
-            }
-
-            // 计算实际应支付总价
-            $amount = $coupon->type == 2 ? $goods->price * $coupon->discount / 10 : $goods->price - $coupon->amount;
-            $amount = $amount > 0 ? $amount : 0;
-        } else {
-            $amount = $goods->price;
-        }
+        $amount = $this->getPaymentAmount($goods, $coupon);
 
         // 价格异常判断
-        if ($amount < 0) {
-            return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：订单总价异常']);
-        } elseif ($amount == 0) {
+        if ($amount == 0) {
             return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：订单总价为0，无需使用在线支付']);
         }
 
@@ -111,68 +186,57 @@ class PaymentController extends Controller
             }
         }
 
-        DB::beginTransaction();
-        try {
-            $orderSn = date('ymdHis') . mt_rand(100000, 999999);
-            $sn = makeRandStr(12);
+        return true;
+    }
 
-            // 生成订单
-            $order = new Order();
-            $order->order_sn = $orderSn;
-            $order->user_id = Auth::user()->id;
-            $order->goods_id = $goods_id;
-            $order->coupon_id = !empty($coupon) ? $coupon->id : 0;
-            $order->origin_amount = $goods->price;
-            $order->amount = $amount;
-            $order->expire_at = date("Y-m-d H:i:s", strtotime("+" . $goods->days . " days"));
-            $order->is_expire = 0;
-            $order->pay_way = 2;
-            $order->status = 0;
-            $order->save();
-
-            // 生成支付单
-            $yzy = new Yzy();
-            $result = $yzy->createQrCode($goods->name, $amount * 100, $orderSn);
-            if (isset($result['error_response'])) {
-                Log::error('【有赞云】创建二维码失败：' . $result['error_response']['msg']);
-
-                throw new \Exception($result['error_response']['msg']);
-            }
-
-            $payment = new Payment();
-            $payment->sn = $sn;
-            $payment->user_id = Auth::user()->id;
-            $payment->oid = $order->oid;
-            $payment->order_sn = $orderSn;
-            $payment->pay_way = 1;
-            $payment->amount = $amount;
-            $payment->qr_id = $result['response']['qr_id'];
-            $payment->qr_url = $result['response']['qr_url'];
-            $payment->qr_code = $result['response']['qr_code'];
-            $payment->qr_local_url = $this->base64ImageSaver($result['response']['qr_code']);
-            $payment->status = 0;
-            $payment->save();
-
-            // 优惠券置为已使用
-            if (!empty($coupon)) {
-                if ($coupon->usage == 1) {
-                    $coupon->status = 1;
-                    $coupon->save();
-                }
-
-                Helpers::addCouponLog($coupon->id, $goods_id, $order->oid, '在线支付使用');
-            }
-
-            DB::commit();
-
-            return Response::json(['status' => 'success', 'data' => $sn, 'message' => '创建订单成功，正在转到付款页面，请稍后']);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Log::error('创建支付订单失败：' . $e->getMessage());
-
-            return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建订单失败：' . $e->getMessage()]);
+    protected function getPaymentAmount($goods, $coupon) {
+        if (!$coupon) {
+            return $goods->price;
         }
+
+        // 计算实际应支付总价
+        $amount = $coupon->type == 2 ? $goods->price * $coupon->discount / 10 : $goods->price - $coupon->amount;
+        return  $amount > 0 ? $amount : 0;
+    }
+    protected function createStripePayment($goods, $amount, $sn, $order, $orderSn) {
+        $payment = new Payment();
+        $payment->sn = $sn;
+        $payment->user_id = Auth::user()->id;
+        $payment->oid = $order->oid;
+        $payment->order_sn = $orderSn;
+        $payment->pay_way = 3; // Stripe
+        $payment->amount = $amount;
+        $payment->status = 0;
+        $payment->save();
+
+        return $payment;
+    }
+
+    protected function createYzyPayment($goods, $amount, $sn, $order, $orderSn) {
+        // 生成支付单
+        $yzy = new Yzy();
+        $result = $yzy->createQrCode($goods->name, $amount * 100, $orderSn);
+        if (isset($result['error_response'])) {
+            Log::error('【有赞云】创建二维码失败：' . $result['error_response']['msg']);
+
+            throw new \Exception($result['error_response']['msg']);
+        }
+
+        $payment = new Payment();
+        $payment->sn = $sn;
+        $payment->user_id = Auth::user()->id;
+        $payment->oid = $order->oid;
+        $payment->order_sn = $orderSn;
+        $payment->pay_way = 1;
+        $payment->amount = $amount;
+        $payment->qr_id = $result['response']['qr_id'];
+        $payment->qr_url = $result['response']['qr_url'];
+        $payment->qr_code = $result['response']['qr_code'];
+        $payment->qr_local_url = $this->base64ImageSaver($result['response']['qr_code']);
+        $payment->status = 0;
+        $payment->save();
+
+        return $payment;
     }
 
     // 支付单详情

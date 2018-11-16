@@ -77,6 +77,8 @@
             @endif
             <div class="row">
                 <div class="col-xs-12" style="text-align: right;">
+
+                    <button class="btn btn-lg red hidden-print" id="stripePaymentBtn">Stripe Pay</button>
                     @if($is_youzan)
                         <a class="btn btn-lg red hidden-print" onclick="onlinePay()"> {{trans('home.online_pay')}} </a>
                     @endif
@@ -91,7 +93,62 @@
     <!-- END CONTENT BODY -->
 @endsection
 @section('script')
+    <script src="https://checkout.stripe.com/checkout.js"></script>
     <script src="/js/layer/layer.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        var stripePaymentAmount=0;
+        var sn='';
+        // stripe payment
+        var handler = StripeCheckout.configure({
+            key: '{{config('stripe.public_key')}}',
+            image: 'https://stripe.com/img/documentation/checkout/marketplace.png',
+            token: function(token) {
+                console.log(token)
+                // You can access the token ID with `token.id`.
+                // Get the token ID to your server-side code for use.
+                $.ajax({
+                    type: "POST",
+                    url: "{{url('stripe/charge')}}",
+                    async: false,
+                    data: {_token:'{{csrf_token()}}', token, amount: stripePaymentAmount, sn},
+                    dataType: 'json',
+                    beforeSend: function () {
+                        index = layer.load(1, {
+                            shade: [0.7,'#CCC']
+                        });
+                    },
+                    success: function (ret) {
+                        console.log(ret)
+                        alert('success')
+                        window.location.href = '{{url('invoices')}}';
+                    }
+                });
+            }
+        });
+
+        document.getElementById('stripePaymentBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            stripePay(function (data) {
+                stripePaymentAmount = data.amount
+                sn = data.sn
+                // Open Checkout with further options:
+                handler.open({
+                    name: 'Our Awesome SSR',
+                    description: '{{$goods->name}}',
+                    amount: data.amount,
+                    currency: 'CNY',
+                    email: data.email,
+                });
+            })
+        });
+
+        // Close Checkout on page navigation:
+        window.addEventListener('popstate', function() {
+            handler.close();
+        });
+    </script>
 
     <script type="text/javascript">
         // 校验优惠券是否可用
@@ -140,6 +197,42 @@
             });
         }
 
+        // Stripe payment
+        function stripePay(successFunc) {
+            var goods_id = '{{$goods->id}}';
+            var coupon_sn = $('#coupon_sn').val();
+
+            index = layer.load(1, {
+                shade: [0.7,'#CCC']
+            });
+
+            $.ajax({
+                type: "POST",
+                url: "{{url('payment/create')}}",
+                async: false,
+                data: {_token:'{{csrf_token()}}', goods_id:goods_id, coupon_sn:coupon_sn, payment_type: 'stripe'},
+                dataType: 'json',
+                beforeSend: function () {
+                    index = layer.load(1, {
+                        shade: [0.7,'#CCC']
+                    });
+                },
+                success: function(ret) {
+                    if (ret.status == 'success') {
+                        return successFunc(ret.data)
+                    }
+                    alert('create payment error')
+                    console.log(ret)
+                    layer.close(index)
+                },
+                error: function (xhr, textStatus, error) {
+                    alert('create payment error')
+                    console.log(xhr, textStatus, error)
+                    layer.close(index)
+                },
+            });
+        }
+
         // 在线支付
         function onlinePay() {
             var goods_id = '{{$goods->id}}';
@@ -153,7 +246,7 @@
                 type: "POST",
                 url: "{{url('payment/create')}}",
                 async: false,
-                data: {_token:'{{csrf_token()}}', goods_id:goods_id, coupon_sn:coupon_sn},
+                data: {_token:'{{csrf_token()}}', goods_id:goods_id, coupon_sn:coupon_sn, payment_type: 'youzan'},
                 dataType: 'json',
                 beforeSend: function () {
                     index = layer.load(1, {

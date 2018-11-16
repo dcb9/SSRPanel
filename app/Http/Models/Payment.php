@@ -67,8 +67,13 @@ class Payment extends Model
                 $pay_way_label = '微信';
                 break;
             case 2:
-            default:
                 $pay_way_label = '支付宝';
+                break;
+            case 3:
+                $pay_way_label = 'Stripe';
+                break;
+            default:
+                $pay_way_label = 'Unknown';
                 break;
         }
 

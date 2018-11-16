@@ -128,6 +128,7 @@ Route::group(['middleware' => ['isForbidden', 'isLogin']], function () {
     Route::get("help", "UserController@help"); // 帮助中心
 
     Route::post('payment/create', 'PaymentController@create'); // 创建支付
+    Route::post('stripe/charge', 'StripeController@charge'); // Stripe 扣款
     Route::get('payment/getStatus', 'PaymentController@getStatus'); // 获取支付单状态
     Route::get('payment/{sn}', 'PaymentController@detail'); // 支付单详情
 
