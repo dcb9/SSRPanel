@@ -2,10 +2,10 @@
 
 namespace App\Components;
 
-use Stripe\Stripe as StripeClient;
+use Stripe\Stripe;
 use Stripe\Charge;
 
-class Stripe
+class StripeComponent
 {
     public function __construct()
     {
@@ -14,7 +14,7 @@ class Stripe
             throw new \Exception('Stripe secret key must be set');
         }
 
-        StripeClient::setApiKey($privateKey);
+        Stripe::setApiKey($privateKey);
     }
 
     public function charge($charge) {

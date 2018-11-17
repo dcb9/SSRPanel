@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Components\Helpers;
-use App\Components\Stripe;
+use App\Components\StripeComponent;
+use App\Components\PaymentComponent;
 use App\Http\Models\Payment;
 use App\Http\Models\Goods;
 use App\Http\Models\Order;
@@ -34,7 +35,7 @@ class StripeController extends Controller
             return Response::json(['status' => 'fail', 'data' => '', 'message' => '支付失败: 订单状态不正确']);
         }
 
-        $stripe = new Stripe();
+        $stripe = new StripeComponent();
 
         $chargeObj = [
             'amount' => $amount,
@@ -59,37 +60,23 @@ class StripeController extends Controller
             ]);
         }
 
-        // update database
-        DB::beginTransaction();
         try {
-            $this->setPaid($payment);
-            DB::commit();
+            $paymentComponent = new PaymentComponent($payment);
+            $paymentComponent->paid();
+
             return Response::json([
                 'status' => $chargeRes['status'] ==='succeeded' ? 'success' : 'fail',
                 'data' => '',
                 'message' => '支付成功'
             ]);
         } catch (\Exception $e) {
-            DB::rollBack();
+            Log::error('更新支付单和订单异常：' . $e->getMessage());
+
             return Response::json([
                 'status' => 'fail',
                 'data' => '',
                 'message' => '支付成功，操作数据库失败，请联系管理员'
             ]);
         }
-    }
-
-    protected function setPaid($payment) {
-        // 更新支付单
-        $payment->status = 1;
-        $payment->save();
-
-        // 更新订单
-        $order = Order::query()->with(['user'])->where('oid', $payment->oid)->first();
-        $order->status = 2;
-        $order->save();
-
-        // $goods = Goods::query()->where('id', $order->goods_id)->first();
-        // @TODO 将商品与用户关联上
     }
 }
