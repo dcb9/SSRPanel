@@ -61,7 +61,12 @@ class PaymentController extends Controller
                 }
                 break;
             case 'stripe':
-                $createPaymentFunc = function() use($self) {
+                $createPaymentFunc = function($ignore, $amount) use($self) {
+                    // Amount must be at least 50 cents
+                    if ($amount / 7 < 0.5) {
+                        throw new \Exception('Stripe restriction: amount must be at least 50 cents');
+                    }
+
                     return call_user_func_array([$self, "createStripePayment"], func_get_args());
                 };
                 $successReturnValueFunc = function ($payment) {

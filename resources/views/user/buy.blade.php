@@ -75,17 +75,17 @@
                     </div>
                 </div>
             @endif
-            <div class="row">
+            <div class="row" style="display: none;" id="paymentBtns">
                 <div class="col-xs-12" style="text-align: right;">
 
-                    <button class="btn btn-lg red hidden-print" id="alipayBtn">支付宝付款</button>
-                    <button class="btn btn-lg red hidden-print" id="wechatPaymentBtn">微信支付</button>
-                    <button class="btn btn-lg red hidden-print" id="stripePaymentBtn">Stripe Pay</button>
+                    <button class="btn blue hidden-print" id="alipayBtn">支付宝付款</button>
+                    <button class="btn blue hidden-print" id="wechatPaymentBtn">微信支付</button>
+                    <button class="btn blue hidden-print" id="stripePaymentBtn">Stripe Pay</button>
                     @if($is_youzan)
-                        <a class="btn btn-lg red hidden-print" onclick="onlinePay()"> {{trans('home.online_pay')}} </a>
+                        <a class="btn blue hidden-print" onclick="onlinePay()"> {{trans('home.online_pay')}} </a>
                     @endif
                   	@if($goods->type <= 2)
-                        <a class="btn btn-lg blue hidden-print uppercase" onclick="pay()"> {{trans('home.service_pay_button')}} </a>
+                        <a class="btn blue hidden-print uppercase" onclick="pay()"> {{trans('home.service_pay_button')}} </a>
                   	@endif
                 </div>
             </div>
@@ -99,14 +99,34 @@
     <script src="/js/layer/layer.js" type="text/javascript"></script>
 
     <script type="text/javascript">
-        document.getElementById('alipayBtn').addEventListener('click', function(e) {
-            paysapiPay('paysapi-alipay');
-            e.preventDefault();
-        })
+        $(document).ready(function(){
+            document.getElementById('alipayBtn').addEventListener('click', function(e) {
+                paysapiPay('paysapi-alipay');
+                e.preventDefault();
+            })
 
-        document.getElementById('wechatPaymentBtn').addEventListener('click', function(e) {
-            paysapiPay('paysapi-wechat');
-            e.preventDefault();
+            document.getElementById('wechatPaymentBtn').addEventListener('click', function(e) {
+                paysapiPay('paysapi-wechat');
+                e.preventDefault();
+            })
+
+            document.getElementById('stripePaymentBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+
+                stripePay(function (data) {
+                    stripePaymentAmount = data.amount
+                    sn = data.sn
+                    // Open Checkout with further options:
+                    handler.open({
+                        name: 'Our Awesome SSR',
+                        description: '{{$goods->name}}',
+                        amount: data.amount,
+                        currency: 'CNY',
+                        email: data.email,
+                    });
+                })
+            });
+            document.getElementById('paymentBtns').style.display = null;
         })
 
         var stripePaymentAmount=0;
@@ -137,23 +157,6 @@
                     }
                 });
             }
-        });
-
-        document.getElementById('stripePaymentBtn').addEventListener('click', function(e) {
-            e.preventDefault();
-
-            stripePay(function (data) {
-                stripePaymentAmount = data.amount
-                sn = data.sn
-                // Open Checkout with further options:
-                handler.open({
-                    name: 'Our Awesome SSR',
-                    description: '{{$goods->name}}',
-                    amount: data.amount,
-                    currency: 'CNY',
-                    email: data.email,
-                });
-            })
         });
 
         // Close Checkout on page navigation:
@@ -250,14 +253,15 @@
                         nonAjaxSubmit('https://pay.paysapi.com', 'post', ret.data)
                         return
                     }
-                    alert('create payment error')
-                    console.log(ret)
-                    layer.close(index)
+                    layer.msg(ret.message, {time:2500}, function() {
+                        console.log(ret);
+                        layer.close(index);
+                    });
                 },
                 error: function (xhr, textStatus, error) {
-                    alert('create payment error')
-                    console.log(xhr, textStatus, error)
-                    layer.close(index)
+                    layer.msg("请求失败: " + textStatus, {time:2500}, function() {
+                        layer.close(index);
+                    });
                 },
             });
         }
@@ -285,15 +289,18 @@
                 success: function(ret) {
                     if (ret.status == 'success') {
                         return successFunc(ret.data)
+                    } else {
+                        layer.msg(ret.message, {time:2500}, function() {
+                            console.log(ret);
+                            layer.close(index);
+                        });
                     }
-                    alert('create payment error')
-                    console.log(ret)
-                    layer.close(index)
                 },
                 error: function (xhr, textStatus, error) {
-                    alert('create payment error')
                     console.log(xhr, textStatus, error)
-                    layer.close(index)
+                    layer.msg("请求失败: " + textStatus, {time:2500}, function() {
+                        layer.close(index);
+                    });
                 },
             });
         }
