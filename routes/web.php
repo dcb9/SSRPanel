@@ -131,5 +131,11 @@ Route::group(['middleware' => ['isForbidden', 'isLogin']], function () {
     Route::post('stripe/charge', 'StripeController@charge'); // Stripe 扣款
     Route::get('payment/getStatus', 'PaymentController@getStatus'); // 获取支付单状态
     Route::get('payment/{sn}', 'PaymentController@detail'); // 支付单详情
+});
 
+// Payment channel callback/notify url
+Route::group([], function() {
+    Route::post('paysapi/notify', 'PaysapiController@notify');
+
+    // handle stripe callback
 });

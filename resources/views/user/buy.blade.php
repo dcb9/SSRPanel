@@ -78,6 +78,8 @@
             <div class="row">
                 <div class="col-xs-12" style="text-align: right;">
 
+                    <button class="btn btn-lg red hidden-print" id="alipayBtn">支付宝付款</button>
+                    <button class="btn btn-lg red hidden-print" id="wechatPaymentBtn">微信支付</button>
                     <button class="btn btn-lg red hidden-print" id="stripePaymentBtn">Stripe Pay</button>
                     @if($is_youzan)
                         <a class="btn btn-lg red hidden-print" onclick="onlinePay()"> {{trans('home.online_pay')}} </a>
@@ -97,6 +99,16 @@
     <script src="/js/layer/layer.js" type="text/javascript"></script>
 
     <script type="text/javascript">
+        document.getElementById('alipayBtn').addEventListener('click', function(e) {
+            paysapiPay('paysapi-alipay');
+            e.preventDefault();
+        })
+
+        document.getElementById('wechatPaymentBtn').addEventListener('click', function(e) {
+            paysapiPay('paysapi-wechat');
+            e.preventDefault();
+        })
+
         var stripePaymentAmount=0;
         var sn='';
         // stripe payment
@@ -151,6 +163,23 @@
     </script>
 
     <script type="text/javascript">
+        function nonAjaxSubmit(action, method, values) {
+            const form = $('<form/>', {
+                action: action,
+                method: method
+            })
+
+            for (const name in values) {
+                form.append($('<input/>', {
+                    type: 'hidden',
+                    name: name,
+                    value: values[name],
+                }))
+            }
+
+            form.appendTo('body').submit()
+        }
+
         // 校验优惠券是否可用
         function redeemCoupon() {
             var coupon_sn = $('#coupon_sn').val();
@@ -194,6 +223,42 @@
                         $("#coupon_sn").parent().prepend('<span class="input-group-addon"><i class="fa fa-remove fa-fw"></i></span>');
                     }
                 }
+            });
+        }
+
+        function paysapiPay(payment_type) {
+            var goods_id = '{{$goods->id}}';
+            var coupon_sn = $('#coupon_sn').val();
+
+            index = layer.load(1, {
+                shade: [0.7,'#CCC']
+            });
+
+            $.ajax({
+                type: "POST",
+                url: "{{url('payment/create')}}",
+                async: false,
+                data: {_token:'{{csrf_token()}}', goods_id:goods_id, coupon_sn:coupon_sn, payment_type},
+                dataType: 'json',
+                beforeSend: function () {
+                    index = layer.load(1, {
+                        shade: [0.7,'#CCC']
+                    });
+                },
+                success: function(ret) {
+                    if (ret.status == 'success') {
+                        nonAjaxSubmit('https://pay.paysapi.com', 'post', ret.data)
+                        return
+                    }
+                    alert('create payment error')
+                    console.log(ret)
+                    layer.close(index)
+                },
+                error: function (xhr, textStatus, error) {
+                    alert('create payment error')
+                    console.log(xhr, textStatus, error)
+                    layer.close(index)
+                },
             });
         }
 

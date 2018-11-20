@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Components\Helpers;
 use App\Components\Yzy;
+use App\Components\PaysapiComponent;
 use App\Http\Models\Coupon;
 use App\Http\Models\Goods;
 use App\Http\Models\Order;
@@ -42,7 +43,12 @@ class PaymentController extends Controller
         // set youzan as a default payment type
         $payment_type = $payment_type ? $payment_type : 'youzan';
 
-        $createPaymentMethod = "createYzyPayment";
+        $goods = Goods::query()->where('is_del', 0)->where('status', 1)->where('id', $goods_id)->first();
+
+        $self = $this;
+        $createPaymentFunc = function() use($self) {
+            return call_user_func_array([$self, "createYzyPayment"], func_get_args());
+        };
         $successReturnValueFunc = function ($payment) {
             return $payment->sn;
         };
@@ -55,13 +61,34 @@ class PaymentController extends Controller
                 }
                 break;
             case 'stripe':
-                $createPaymentMethod = "createStripePayment";
+                $createPaymentFunc = function() use($self) {
+                    return call_user_func_array([$self, "createStripePayment"], func_get_args());
+                };
                 $successReturnValueFunc = function ($payment) {
                     return [
                         'amount' => intval($payment->amount * 100),
                         'email' => Auth::user()->username,
                         'sn' => $payment->sn,
                     ];
+                };
+                break;
+            case 'paysapi-alipay':
+                $istype = '1';
+                $payWay = 5;
+            case 'paysapi-wechat':
+                if (!isset($istype)) {
+                    $istype = '2';
+                    $payWay = 6;
+                }
+
+                $createPaymentFunc = function() use ($self, $payWay) {
+                    $args = func_get_args();
+                    array_push($args, $payWay);
+                    return call_user_func_array([$self, "createPaysapiPayment"], $args);
+                };
+                $successReturnValueFunc = function ($payment) use ($goods, $istype) {
+                    $paysapiComponent = new PaysapiComponent();
+                    return $paysapiComponent->createPayment($payment, $goods->name, $istype);
                 };
                 break;
             default:
@@ -77,7 +104,6 @@ class PaymentController extends Controller
             }
         }
 
-        $goods = Goods::query()->where('is_del', 0)->where('status', 1)->where('id', $goods_id)->first();
         $res = $this->validatePayment($goods, $coupon);
         if ($res !== true) {
             return $res;
@@ -104,7 +130,7 @@ class PaymentController extends Controller
             $order->status = 0;
             $order->save();
 
-            $payment = $this->$createPaymentMethod($goods, $amount, $sn, $order, $orderSn);
+            $payment = $createPaymentFunc($goods, $amount, $sn, $order, $orderSn);
 
             // 优惠券置为已使用
             if (!empty($coupon)) {
@@ -116,11 +142,13 @@ class PaymentController extends Controller
                 Helpers::addCouponLog($coupon->id, $goods_id, $order->oid, $payment->getPayWayLabelAttribute() + '支付使用');
             }
 
+            $data = $successReturnValueFunc($payment);
+
             DB::commit();
 
             return Response::json([
                 'status' => 'success',
-                'data' => $successReturnValueFunc($payment),
+                'data' => $data,
                 'message' => '创建订单成功，正在转到付款页面，请稍后'
             ]);
         } catch (\Exception $e) {
@@ -198,6 +226,21 @@ class PaymentController extends Controller
         $amount = $coupon->type == 2 ? $goods->price * $coupon->discount / 10 : $goods->price - $coupon->amount;
         return  $amount > 0 ? $amount : 0;
     }
+
+    protected function createPaysapiPayment($goods, $amount, $sn, $order, $orderSn, $payWay) {
+        $payment = new Payment();
+        $payment->sn = $sn;
+        $payment->user_id = Auth::user()->id;
+        $payment->oid = $order->oid;
+        $payment->order_sn = $orderSn;
+        $payment->pay_way = $payWay; // 5 = paysapi alipay  6 = paysapi wechat
+        $payment->amount = $amount;
+        $payment->status = 0;
+        $payment->save();
+
+        return $payment;
+    }
+
     protected function createStripePayment($goods, $amount, $sn, $order, $orderSn) {
         $payment = new Payment();
         $payment->sn = $sn;

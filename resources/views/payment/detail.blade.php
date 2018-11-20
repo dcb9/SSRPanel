@@ -10,9 +10,15 @@
         <!-- BEGIN PAGE BASE CONTENT -->
         <div class="portlet light bordered">
             <div class="portlet-body">
-                <div class="alert alert-info" style="text-align: center;">
-                    请使用<strong style="color:red;">支付宝、QQ、微信</strong>扫描如下二维码
-                </div>
+                @if($payment->pay_way == 5 || $payment->pay_way == 6)
+                    <div class="alert alert-info" style="text-align: center;">
+                        订单支付状态
+                    </div>
+                @else
+                    <div class="alert alert-info" style="text-align: center;">
+                        请使用<strong style="color:red;">支付宝、QQ、微信</strong>扫描如下二维码
+                    </div>
+                @endif
                 <div class="row" style="text-align: center; font-size: 1.05em;">
                     <div class="col-md-12">
                         <div class="table-scrollable">
@@ -29,20 +35,26 @@
                                     <td align="right">有效期：</td>
                                     <td align="left">{{$payment->order->goods->days}} 天</td>
                                 </tr>
-                                <tr>
-                                    <td colspan="2">
-                                        扫描下方二维码进行付款（可截图再扫描）
-                                        <br>
-                                        请于15分钟内支付，到期未支付订单将自动关闭
-                                        <br>
-                                        支付后，请稍作等待，账号状态会自动更新
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="2" align="center">
-                                        <img src="{{$payment->qr_local_url}}"/>
-                                    </td>
-                                </tr>
+                                @if($payment->pay_way == 5 || $payment->pay_way == 6)
+                                    <tr>
+                                        <td colspan="2">正在获取支付结果，请稍后……</td>
+                                    </tr>
+                                @else
+                                    <tr>
+                                        <td colspan="2">
+                                            扫描下方二维码进行付款（可截图再扫描）
+                                            <br>
+                                            请于15分钟内支付，到期未支付订单将自动关闭
+                                            <br>
+                                            支付后，请稍作等待，账号状态会自动更新
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" align="center">
+                                            <img src="{{$payment->qr_local_url}}"/>
+                                        </td>
+                                    </tr>
+                                @endif
                             </table>
                         </div>
                     </div>
@@ -58,17 +70,24 @@
     <script type="text/javascript">
         // 每800毫秒查询一次订单状态
         $(document).ready(function(){
-            setInterval("getStatus()", 800);
+            setTimeout(getStatus, 800);
         });
+
+        const sn = '{{$payment->sn}}';
 
         // 检查支付单状态
         function getStatus () {
-            var sn = '{{$payment->sn}}';
 
-            $.get("{{url('payment/getStatus')}}", {sn:sn}, function (ret) {
+            $.get("{{url('payment/getStatus')}}", {sn}, function (ret) {
                 console.log(ret);
+                if (ret.status == 'fail') {
+                    // waiting for user's payment
+                    setTimeout(getStatus, 800);
+                    return;
+                }
+
                 if (ret.status == 'success') {
-                    layer.msg(ret.message, {time:1500}, function() {
+                    layer.msg(ret.message, {time:800}, function() {
                         window.location.href = '{{url('invoices')}}';
                     });
                 } else if(ret.status == 'error') {
