@@ -151,8 +151,6 @@
                         });
                     },
                     success: function (ret) {
-                        console.log(ret)
-                        alert('success')
                         window.location.href = '{{url('invoices')}}';
                     }
                 });
@@ -229,7 +227,7 @@
             });
         }
 
-        function paysapiPay(payment_type) {
+        function createPayment(payment_type, successFunc) {
             var goods_id = '{{$goods->id}}';
             var coupon_sn = $('#coupon_sn').val();
 
@@ -250,8 +248,7 @@
                 },
                 success: function(ret) {
                     if (ret.status == 'success') {
-                        nonAjaxSubmit('https://pay.paysapi.com', 'post', ret.data)
-                        return
+                        return successFunc(ret.data)
                     }
                     layer.msg(ret.message, {time:2500}, function() {
                         console.log(ret);
@@ -266,78 +263,24 @@
             });
         }
 
+        function paysapiPay(payment_type) {
+            createPayment(payment_type, function (data) {
+                nonAjaxSubmit('https://pay.paysapi.com', 'post', data)
+            })
+        }
+
         // Stripe payment
         function stripePay(successFunc) {
-            var goods_id = '{{$goods->id}}';
-            var coupon_sn = $('#coupon_sn').val();
-
-            index = layer.load(1, {
-                shade: [0.7,'#CCC']
-            });
-
-            $.ajax({
-                type: "POST",
-                url: "{{url('payment/create')}}",
-                async: false,
-                data: {_token:'{{csrf_token()}}', goods_id:goods_id, coupon_sn:coupon_sn, payment_type: 'stripe'},
-                dataType: 'json',
-                beforeSend: function () {
-                    index = layer.load(1, {
-                        shade: [0.7,'#CCC']
-                    });
-                },
-                success: function(ret) {
-                    if (ret.status == 'success') {
-                        return successFunc(ret.data)
-                    } else {
-                        layer.msg(ret.message, {time:2500}, function() {
-                            console.log(ret);
-                            layer.close(index);
-                        });
-                    }
-                },
-                error: function (xhr, textStatus, error) {
-                    console.log(xhr, textStatus, error)
-                    layer.msg("请求失败: " + textStatus, {time:2500}, function() {
-                        layer.close(index);
-                    });
-                },
-            });
+            createPayment('stripe', function (data) {
+                return successFunc(data)
+            })
         }
 
         // 在线支付
         function onlinePay() {
-            var goods_id = '{{$goods->id}}';
-            var coupon_sn = $('#coupon_sn').val();
-
-            index = layer.load(1, {
-                shade: [0.7,'#CCC']
-            });
-
-            $.ajax({
-                type: "POST",
-                url: "{{url('payment/create')}}",
-                async: false,
-                data: {_token:'{{csrf_token()}}', goods_id:goods_id, coupon_sn:coupon_sn, payment_type: 'youzan'},
-                dataType: 'json',
-                beforeSend: function () {
-                    index = layer.load(1, {
-                        shade: [0.7,'#CCC']
-                    });
-                },
-                success: function (ret) {
-                    layer.msg(ret.message, {time:1300}, function() {
-                        if (ret.status == 'success') {
-                            window.location.href = '{{url('payment')}}' + "/" + ret.data;
-                        } else {
-                            window.location.href = '{{url('invoices')}}';
-                        }
-                    });
-                }
-                //complete: function () {
-                    //
-                //}
-            });
+            createPayment('youzan', function (data) {
+                window.location.href = '{{url('payment')}}' + "/" + data;
+            })
         }
 
         // 余额支付
