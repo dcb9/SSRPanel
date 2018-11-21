@@ -26,6 +26,8 @@ class AutoCheckNodeStatus extends Command
 
     public function handle()
     {
+            $this->checkNodes();
+            return;
         $jobStartTime = microtime(true);
 
         // 监测节点状态

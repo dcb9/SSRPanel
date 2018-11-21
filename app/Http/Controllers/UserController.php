@@ -608,7 +608,7 @@ class UserController extends Controller
                     return Response::json(['status' => 'fail', 'data' => '', 'message' => '支付失败：商品不可重复购买']);
                 }
             }
-      
+
       	    // 单个商品限购
             if ($goods->is_limit == 1) {
                 $noneExpireOrderExist = Order::query()->where('status', '>=', 0)->where('user_id', Auth::user()->id)->where('goods_id', $goods_id)->exists();
@@ -681,7 +681,7 @@ class UserController extends Controller
                 User::query()->where('id', $user->id)->decrement('balance', $amount * 100);
 
                 // 记录余额操作日志
-                $this->addUserBalanceLog($user->id, $order->oid, $user->balance, $user->balance - $amount, -1 * $amount, '购买服务：' . $goods->name);
+                Helpers::addUserBalanceLog($user->id, $order->oid, $user->balance, $user->balance - $amount, -1 * $amount, '购买服务：' . $goods->name);
 
                 // 优惠券置为已使用
                 if (!empty($coupon)) {
@@ -771,7 +771,7 @@ class UserController extends Controller
 
                 // 写入返利日志
                 if ($user->referral_uid) {
-                    $this->addReferralLog($user->id, $user->referral_uid, $order->oid, $amount, $amount * self::$systemConfig['referral_percent']);
+                    Helpers::addReferralLog($user->id, $user->referral_uid, $order->oid, $amount, $amount * self::$systemConfig['referral_percent']);
                 }
 
                 // 取消重复返利
@@ -816,7 +816,7 @@ class UserController extends Controller
         DB::beginTransaction();
         try {
             // 写入积分操作日志
-            $ret = $this->addUserScoreLog(Auth::user()->id, Auth::user()->score, 0, -1 * Auth::user()->score, '积分兑换流量');
+            $ret = Helpers::addUserScoreLog(Auth::user()->id, Auth::user()->score, 0, -1 * Auth::user()->score, '积分兑换流量');
 
             // 扣积分加流量
             if ($ret) {
@@ -960,7 +960,7 @@ class UserController extends Controller
             $user = User::query()->where('id', Auth::user()->id)->first();
 
             // 写入日志
-            $this->addUserBalanceLog($user->id, 0, $user->balance, $user->balance + $coupon->amount, $coupon->amount, '用户手动充值 - [充值券：' . $coupon_sn . ']');
+            Helpers::addUserBalanceLog($user->id, 0, $user->balance, $user->balance + $coupon->amount, $coupon->amount, '用户手动充值 - [充值券：' . $coupon_sn . ']');
 
             // 余额充值
             $user->balance = $user->balance + $coupon->amount;

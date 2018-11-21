@@ -123,7 +123,7 @@ class PaymentComponent
 
                 // 写入返利日志
                 if ($order->user->referral_uid) {
-                    $this->addReferralLog($order->user_id, $order->user->referral_uid, $order->oid, $order->amount, $order->amount * self::$systemConfig['referral_percent']);
+                    Helpers::addReferralLog($order->user_id, $order->user->referral_uid, $order->oid, $order->amount, $order->amount * self::$systemConfig['referral_percent']);
                 }
 
                 // 取消重复返利
@@ -132,7 +132,7 @@ class PaymentComponent
                 User::query()->where('id', $order->user_id)->increment('balance', $goods->price * 100);
 
                 // 余额变动记录日志
-                $this->addUserBalanceLog($order->user_id, $order->oid, $order->user->balance, $order->user->balance + $goods->price, $goods->price, '用户在线充值');
+                Helpers::addUserBalanceLog($order->user_id, $order->oid, $order->user->balance, $order->user->balance + $goods->price, $goods->price, '用户在线充值');
             }
 
             // 自动提号机：如果order的email值不为空

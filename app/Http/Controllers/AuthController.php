@@ -84,7 +84,7 @@ class AuthController extends Controller
                     $score = mt_rand(self::$systemConfig['min_rand_score'], self::$systemConfig['max_rand_score']);
                     $ret = User::query()->where('id', Auth::user()->id)->increment('score', $score);
                     if ($ret) {
-                        $this->addUserScoreLog(Auth::user()->id, Auth::user()->score, Auth::user()->score + $score, $score, '登录送积分');
+                        Helpers::addUserScoreLog(Auth::user()->id, Auth::user()->score, Auth::user()->score + $score, $score, '登录送积分');
 
                         // 登录多久后再登录可以获取积分
                         $ttl = self::$systemConfig['login_add_score_range'] ? self::$systemConfig['login_add_score_range'] : 1440;

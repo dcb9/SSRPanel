@@ -2,10 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Models\ReferralLog;
 use App\Http\Models\SensitiveWords;
-use App\Http\Models\UserBalanceLog;
-use App\Http\Models\UserScoreLog;
 use App\Http\Models\UserSubscribe;
 use App\Http\Models\UserTrafficModifyLog;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -88,103 +85,6 @@ class Controller extends BaseController
         fclose($fp);
 
         return $i;
-    }
-
-    /**
-     * 记录余额操作日志
-     *
-     * @param int    $userId 用户ID
-     * @param string $oid    订单ID
-     * @param int    $before 记录前余额
-     * @param int    $after  记录后余额
-     * @param int    $amount 发生金额
-     * @param string $desc   描述
-     *
-     * @return int
-     */
-    public function addUserBalanceLog($userId, $oid, $before, $after, $amount, $desc = '')
-    {
-        $log = new UserBalanceLog();
-        $log->user_id = $userId;
-        $log->order_id = $oid;
-        $log->before = $before;
-        $log->after = $after;
-        $log->amount = $amount;
-        $log->desc = $desc;
-        $log->created_at = date('Y-m-d H:i:s');
-
-        return $log->save();
-    }
-
-    /**
-     * 记录流量变动日志
-     *
-     * @param int    $userId 用户ID
-     * @param string $oid    订单ID
-     * @param int    $before 记录前的值
-     * @param int    $after  记录后的值
-     * @param string $desc   描述
-     *
-     * @return int
-     */
-    public function addUserTrafficModifyLog($userId, $oid, $before, $after, $desc = '')
-    {
-        $log = new UserTrafficModifyLog();
-        $log->user_id = $userId;
-        $log->order_id = $oid;
-        $log->before = $before;
-        $log->after = $after;
-        $log->desc = $desc;
-
-        return $log->save();
-    }
-
-    /**
-     * 添加返利日志
-     *
-     * @param int $userId    用户ID
-     * @param int $refUserId 返利用户ID
-     * @param int $oid       订单ID
-     * @param int $amount    发生金额
-     * @param int $refAmount 返利金额
-     *
-     * @return int
-     */
-    public function addReferralLog($userId, $refUserId, $oid, $amount, $refAmount)
-    {
-        $log = new ReferralLog();
-        $log->user_id = $userId;
-        $log->ref_user_id = $refUserId;
-        $log->order_id = $oid;
-        $log->amount = $amount;
-        $log->ref_amount = $refAmount;
-        $log->status = 0;
-
-        return $log->save();
-    }
-
-    /**
-     * 添加积分日志
-     *
-     * @param int    $userId 用户ID
-     * @param int    $before 记录前余额
-     * @param int    $after  记录后余额
-     * @param int    $score  发生值
-     * @param string $desc   描述
-     *
-     * @return int
-     */
-    public function addUserScoreLog($userId, $before, $after, $score, $desc = '')
-    {
-        $log = new UserScoreLog();
-        $log->user_id = $userId;
-        $log->before = $before;
-        $log->after = $after;
-        $log->score = $score;
-        $log->desc = $desc;
-        $log->created_at = date('Y-m-d H:i:s');
-
-        return $log->save();
     }
 
     // 获取敏感词
