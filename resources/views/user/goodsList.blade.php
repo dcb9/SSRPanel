@@ -41,10 +41,6 @@
                                             <td style="width: 20%;">
                                                 <!--@if($goods->logo) <a href="{{$goods->logo}}" class="fancybox"><img src="{{$goods->logo}}"/></a> @endif -->
                                                 <span style="font-size: 1.15em; color: #000;">{{$goods->name}}</span>
-                                                <br>
-                                                <span style="color: #000;">{{trans('home.service_traffic')}}：{{$goods->traffic_label}}</span>
-                                                <br>
-                                                <span style="color: #000;">{{trans('home.service_days')}}：{{$goods->days}} {{trans('home.day')}}</span>
                                             </td>
                                             <td style="width: 20%; text-align: center;"> {{$goods->desc}} </td>
                                             <td style="width: 20%; text-align: center;">

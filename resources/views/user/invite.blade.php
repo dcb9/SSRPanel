@@ -6,23 +6,18 @@
 @section('content')
     <!-- BEGIN CONTENT BODY -->
     <div class="page-content" style="padding-top:0;">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="note note-info">
-                    <p>{{trans('home.promote_invite_code', ['traffic' => $referral_traffic, 'referral_percent' => $referral_percent * 100])}}</p>
-                </div>
-            </div>
-        </div>
         <!-- BEGIN PAGE BASE CONTENT -->
         <div class="row">
             <div class="col-md-4">
                 <div class="tab-pane active">
                     <div class="portlet light bordered">
-                        <div class="portlet-title">
-                            <div class="caption">
-                                <span class="caption-subject font-dark bold">{{trans('home.invite_code_make')}}</span>
+                        @if(Session::get('referral_status'))
+                            <div class="portlet-title">
+                                <div class="caption">
+                                    <span class="caption-subject font-dark bold">{{trans('home.invite_code_make')}}</span>
+                                </div>
                             </div>
-                        </div>
+                        @endif
                         <div class="portlet-body">
                             <div class="alert alert-info">
                                 <i class="fa fa-warning"></i>

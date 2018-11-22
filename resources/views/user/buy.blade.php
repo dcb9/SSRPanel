@@ -40,9 +40,6 @@
                                 <tr>
                                     <td style="padding: 10px;">
                                         <h2>{{$goods->name}}</h2>
-                                        {{trans('home.service_traffic')}} {{$goods->traffic_label}}
-                                        <br/>
-                                        {{trans('home.service_days')}} {{$goods->days}} {{trans('home.day')}}
                                     </td>
                                     <td class="text-center"> ￥{{$goods->price}} </td>
                                     <td class="text-center"> x 1 </td>
@@ -61,17 +58,6 @@
                     <div class="col-xs-3">
                         <h2 class="invoice-title"> {{trans('home.service_total_price')}} </h2>
                         <p class="invoice-desc grand-total"> ￥{{$goods->price}} </p>
-                    </div>
-                    <div class="col-xs-6">
-                        <h2 class="invoice-title"> {{trans('home.coupon')}} </h2>
-                        <p class="invoice-desc">
-                            <div class="input-group">
-                                <input class="form-control" type="text" name="coupon_sn" id="coupon_sn" placeholder="{{trans('home.coupon')}}" />
-                                <span class="input-group-btn">
-                                    <button class="btn btn-default" type="button" onclick="redeemCoupon()"><i class="fa fa-refresh"></i> {{trans('home.redeem_coupon')}} </button>
-                                </span>
-                            </div>
-                        </p>
                     </div>
                 </div>
             @endif

@@ -64,66 +64,17 @@
                                     @endif
 
                                     <div class="tabbable-line">
-                                        <ul class="nav nav-tabs ">
-                                            <li class="active">
-                                                <a href="#tools1" data-toggle="tab"> <i class="fa fa-apple"></i> Mac </a>
-                                            </li>
-                                            <li>
-                                                <a href="#tools2" data-toggle="tab"> <i class="fa fa-windows"></i> Windows </a>
-                                            </li>
-                                            <li>
-                                                <a href="#tools3" data-toggle="tab"> <i class="fa fa-linux"></i> Linux </a>
-                                            </li>
-                                            <li>
-                                                <a href="#tools4" data-toggle="tab"> <i class="fa fa-apple"></i> iOS </a>
-                                            </li>
-                                            <li>
-                                                <a href="#tools5" data-toggle="tab"> <i class="fa fa-android"></i> Android </a>
-                                            </li>
-                                        </ul>
-                                        <div class="tab-content" style="font-size:16px;">
-                                            <div class="tab-pane active" id="tools1">
-                                                <ol>
-                                                    <li> <a href="{{asset('clients/ShadowsocksX-NG.1.8.2.zip')}}" target="_blank">点击此处</a>下载客户端并启动 </li>
-                                                    <li> 单击状态栏小飞机，找到服务器->编辑订阅，复制黏贴订阅地址 </li>
-                                                    <li> 点击服务器->手动更新订阅，更新您的服务信息 </li>
-                                                    <li> 更新成功后，请在服务器菜单处选择线路，并点击打开ShadowsocksR </li>
-                                                    <li> 单击小飞机，选择PAC自动模式 </li>
-                                                </ol>
-                                            </div>
-                                            <div class="tab-pane" id="tools2">
-                                                <ol>
-                                                    <li> <a href="{{asset('clients/Shadowsocks-4.1.2.zip')}}" target="_blank">点击此处</a>下载客户端并启动 </li>
-                                                    <li> 单击状态栏小飞机，找到服务器->订阅->订阅设置，复制黏贴订阅地址 </li>
-                                                    <li> 点击状态栏小飞机，找到模式，选中PAC </li>
-                                                    <li> 点击状态栏小飞机，找到PAC，选中更新PAC为GFWList </li>
-                                                </ol>
-                                            </div>
-                                            <div class="tab-pane" id="tools3">
-                                                <ol>
-                                                    <li> <a href="{{asset('clients/Shadowsocks-qt5-3.0.1.zip')}}" target="_blank">点击此处</a>下载客户端并启动 </li>
-                                                    <li> 单击状态栏小飞机，找到服务器->编辑订阅，复制黏贴订阅地址 </li>
-                                                    <li> 更新订阅设置即可 </li>
-                                                </ol>
-                                            </div>
-                                            <div class="tab-pane" id="tools4">
-                                                <ol>
-                                                    @if(Agent::is('iPhone') || Agent::is('iPad'))
-                                                        <li> <a href="{{$ipa_list}}" target="_blank">点击此处在线安装</a></li>
-                                                    @endif
-                                                    <li> 请从站长处获取App Store美区ID及教程 </li>
-                                                </ol>
-                                            </div>
-                                            <div class="tab-pane" id="tools5">
-                                                <ol>
-                                                    <li> <a href="{{asset('clients/Shadowsocks-universal-4.6.1.apk')}}" target="_blank">点击此处</a>下载客户端并启动 </li>
-                                                    <li> 单击左上角的shadowsocksR进入配置文件页，点击右下角的“+”号，点击“添加/升级SSR订阅”，填入订阅信息并保存 </li>
-                                                    <li> 选中任意一个节点，返回软件首页 </li>
-                                                    <li> 在软件首页处找到“路由”选项，并将其改为“绕过局域网及中国大陆地址” </li>
-                                                    <li> 点击右上角的小飞机图标进行连接，提示是否添加（或创建）VPN连接，点同意（或允许） </li>
-                                                </ol>
-                                            </div>
-                                        </div>
+                                        <br />
+                                        <a href="/pdf/mac.pdf" target="_blank">Mac 使用指南.pdf</a>
+                                        <br />
+                                        <br />
+                                        <a href="/pdf/ios.pdf" target="_blank">iOS 使用指南.pdf</a>
+                                        <br />
+                                        <br />
+                                        <a href="/pdf/win.pdf" target="_blank">Windows 使用指南.pdf</a>
+                                        <br />
+                                        <br />
+                                        <a href="/pdf/android.pdf" target="_blank">Android 使用指南.pdf</a>
                                     </div>
                                 </div>
                             </div>
@@ -196,13 +147,6 @@
                         <div class="caption">
                             <span class="caption-subject font-blue bold">{{trans('home.account_info')}}</span>
                         </div>
-                        <div class="actions">
-                            <div class="btn-group btn-group-devided" data-toggle="buttons">
-                                <label class="btn red btn-sm">
-                                    <a href="javascript:;" data-toggle="modal" data-target="#charge_modal" style="color: #FFF;">{{trans('home.recharge')}}</a>
-                                </label>
-                            </div>
-                        </div>
                     </div>
                     <div class="portlet-body form">
                         <form role="form">
@@ -224,10 +168,6 @@
                                         <p class="form-control-static"> <a href="javascript:;" data-toggle="modal" data-target="#exchange_modal" style="color:#000;">{{$info['score']}}</a> </p>
                                     </div>
                                 @endif
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="col-md-4">{{trans('home.account_balance')}}：</label>
-                                    <p class="form-control-static"> {{$info['balance']}} </p>
-                                </div>
                                 @if(date('Y-m-d') > $info['expire_time'])
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label class="col-md-4">{{trans('home.account_expire')}}：</label>
@@ -246,10 +186,6 @@
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label class="col-md-4">{{trans('home.account_last_login')}}：</label>
                                     <p class="form-control-static"> {{empty($info['last_login']) ? trans('home.never_loggedin') : date('Y-m-d H:i:s', $info['last_login'])}} </p>
-                                </div>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="col-md-4">{{trans('home.account_bandwidth_usage')}}：</label>
-                                    <p class="form-control-static"> {{$info['usedTransfer']}}（{{$info['totalTransfer']}}）@if($info['traffic_reset_day']) &ensp;{{trans('home.account_reset_notice', ['reset_day' => $info['traffic_reset_day']])}}  @endif </p>
                                 </div>
                             </div>
                         </form>
