@@ -67,12 +67,12 @@ class ShopController extends Controller
                 return Redirect::back()->withInput();
             }
 
+            // @todo 为啥有这个限制？先关闭了
             // 套餐有效天数必须大于90天
-            if ($type == 2 && $days < 90) {
-                Session::flash('errorMsg', '套餐有效天数必须不能少于90天');
-
-                return Redirect::back()->withInput();
-            }
+            // if ($type == 2 && $days < 90) {
+            //     Session::flash('errorMsg', '套餐有效天数必须不能少于90天');
+            //     return Redirect::back()->withInput();
+            // }
 
             // 流量不能超过10TB
             if (in_array($type, [1, 2]) && $traffic > 10240000) {
