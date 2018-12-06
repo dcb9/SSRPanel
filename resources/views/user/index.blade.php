@@ -90,7 +90,7 @@
                                                     <li> 更新成功后，请在服务器菜单处选择线路，并点击打开ShadowsocksR </li>
                                                     <li> 单击小飞机，选择PAC自动模式 </li>
                                                 </ol>
-                                                看不懂上面的？详细图文教程：<a href="/pdf/mac.pdf" target="_blank">Mac 使用指南.pdf</a>
+                                                详细图文教程：<a href="/pdf/mac.pdf" target="_blank">Mac 使用指南.pdf</a>
                                             </div>
                                             <div class="tab-pane" id="tools2">
                                                 <ol>
@@ -99,7 +99,7 @@
                                                     <li> 点击状态栏小飞机，找到模式，选中PAC </li>
                                                     <li> 点击状态栏小飞机，找到PAC，选中更新PAC为GFWList </li>
                                                 </ol>
-                                                <li><a href="/pdf/win.pdf" target="_blank">Windows 使用指南.pdf</a></li>
+                                                详细图文教程：<a href="/pdf/win.pdf" target="_blank">Windows 使用指南.pdf</a>
                                             </div>
                                             <div class="tab-pane" id="tools4">
                                                 <ol>
@@ -113,8 +113,8 @@
                                                     <li> 选中任意一个节点，返回软件首页 </li>
                                                     <li> 在软件首页处找到“路由”选项，并将其改为“绕过局域网及中国大陆地址” </li>
                                                     <li> 点击右上角的小飞机图标进行连接，提示是否添加（或创建）VPN连接，点同意（或允许） </li>
-                                                    <li><a href="/pdf/android.pdf" target="_blank">Android 使用指南.pdf</a></li>
                                                 </ol>
+                                                详细图文教程：<a href="/pdf/android.pdf" target="_blank">Android 使用指南.pdf</a>
                                             </div>
                                             <div class="tab-pane" id="tools3">
                                                 <ol>
