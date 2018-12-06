@@ -48,6 +48,10 @@
                             </div>
                             <div class="portlet-body">
                                 <div class="mt-clipboard-container" style="padding-top:0px;">
+                                    <div class="alert alert-success">
+                                        <p> 新用户当天免费试用，后续使用需要购买服务后才能使用！ </p>
+                                        <p> <a href="/services">点击此处进行购买</a></p>
+                                    </div>
                                     <div class="alert alert-danger">
                                         <p> {{trans('home.subscribe_warning')}} </p>
                                     </div>
