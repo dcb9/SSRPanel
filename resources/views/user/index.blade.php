@@ -95,15 +95,18 @@
                                             <div class="tab-pane" id="tools2">
                                                 <ol>
                                                     <li> <a href="{{asset('clients/ss-win.7z')}}" target="_blank">点击此处</a>下载客户端并启动 </li>
-                                                    <li> 单击状态栏小飞机，找到服务器->订阅->订阅设置，复制黏贴订阅地址 </li>
-                                                    <li> 点击状态栏小飞机，找到模式，选中PAC </li>
-                                                    <li> 点击状态栏小飞机，找到PAC，选中更新PAC为GFWList </li>
+                                                    <li> 右击状态栏小飞机，找到服务器订阅->SSR服务器订阅设置，复制黏贴订阅地址 </li>
+                                                    <li> 右击状态栏小飞机，找到服务器订阅->更新SSR服务器订阅（不通过代理） </li>
+                                                    <li> 右击状态栏小飞机，找到系统代理模式，选中 PAC 模式 </li>
+                                                    <li> 右击状态栏小飞机，找到代理规则，选中绕过局域网和大陆 </li>
+                                                    <li> 能访问 <a href="https://google.com">Google</a>　说明已经配置成功了 </li>
                                                 </ol>
                                                 详细图文教程：<a href="/pdf/win.pdf" target="_blank">Windows 使用指南.pdf</a>
                                             </div>
                                             <div class="tab-pane" id="tools4">
                                                 <ol>
-                                                    <a href="/pdf/ios.pdf" target="_blank">iOS 使用指南.pdf</a>
+                                                    <p>iPhone/iPad 使用情况特殊，请对照使用指南操作即可</p>
+                                                    <p><a href="/pdf/ios.pdf" target="_blank">iOS 使用指南.pdf</a></p>
                                                 </ol>
                                             </div>
                                             <div class="tab-pane" id="tools5">
