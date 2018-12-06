@@ -54,29 +54,29 @@ class PaymentController extends Controller
         };
 
         switch($payment_type) {
-            case 'youzan':
-                // 判断系统是否开启有赞云支付
-                if (!self::$systemConfig['is_youzan']) {
-                    return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：系统并未开启在线支付功能']);
-                }
-                break;
-            case 'stripe':
-                $createPaymentFunc = function($ignore, $amount) use($self) {
-                    // Amount must be at least 50 cents
-                    if ($amount / 7 < 0.5) {
-                        throw new \Exception('Stripe restriction: amount must be at least 50 cents');
-                    }
+            // case 'youzan':
+            //     // 判断系统是否开启有赞云支付
+            //     if (!self::$systemConfig['is_youzan']) {
+            //         return Response::json(['status' => 'fail', 'data' => '', 'message' => '创建支付单失败：系统并未开启在线支付功能']);
+            //     }
+            //     break;
+            // case 'stripe':
+            //     $createPaymentFunc = function($ignore, $amount) use($self) {
+            //         // Amount must be at least 50 cents
+            //         if ($amount / 7 < 0.5) {
+            //             throw new \Exception('Stripe restriction: amount must be at least 50 cents');
+            //         }
 
-                    return call_user_func_array([$self, "createStripePayment"], func_get_args());
-                };
-                $successReturnValueFunc = function ($payment) {
-                    return [
-                        'amount' => intval($payment->amount * 100),
-                        'email' => Auth::user()->username,
-                        'sn' => $payment->sn,
-                    ];
-                };
-                break;
+            //         return call_user_func_array([$self, "createStripePayment"], func_get_args());
+            //     };
+            //     $successReturnValueFunc = function ($payment) {
+            //         return [
+            //             'amount' => intval($payment->amount * 100),
+            //             'email' => Auth::user()->username,
+            //             'sn' => $payment->sn,
+            //         ];
+            //     };
+            //     break;
             case 'paysapi-alipay':
                 $istype = '1';
                 $payWay = 5;

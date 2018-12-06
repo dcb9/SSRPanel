@@ -63,16 +63,8 @@
             @endif
             <div class="row" style="display: none;" id="paymentBtns">
                 <div class="col-xs-12" style="text-align: right;">
-
                     <button class="btn blue hidden-print" id="alipayBtn">支付宝付款</button>
                     <button class="btn blue hidden-print" id="wechatPaymentBtn">微信支付</button>
-                    <button class="btn blue hidden-print" id="stripePaymentBtn">Stripe Pay</button>
-                    @if($is_youzan)
-                        <a class="btn blue hidden-print" onclick="onlinePay()"> {{trans('home.online_pay')}} </a>
-                    @endif
-                  	@if($goods->type <= 2)
-                        <a class="btn blue hidden-print uppercase" onclick="pay()"> {{trans('home.service_pay_button')}} </a>
-                  	@endif
                 </div>
             </div>
         </div>
@@ -81,7 +73,7 @@
     <!-- END CONTENT BODY -->
 @endsection
 @section('script')
-    <script src="https://checkout.stripe.com/checkout.js"></script>
+    <!-- <script src="https://checkout.stripe.com/checkout.js"></script> -->
     <script src="/js/layer/layer.js" type="text/javascript"></script>
 
     <script type="text/javascript">
@@ -96,22 +88,22 @@
                 e.preventDefault();
             })
 
-            document.getElementById('stripePaymentBtn').addEventListener('click', function(e) {
-                e.preventDefault();
+        //     document.getElementById('stripePaymentBtn').addEventListener('click', function(e) {
+        //         e.preventDefault();
 
-                stripePay(function (data) {
-                    stripePaymentAmount = data.amount
-                    sn = data.sn
-                    // Open Checkout with further options:
-                    handler.open({
-                        name: 'Our Awesome SSR',
-                        description: '{{$goods->name}}',
-                        amount: data.amount,
-                        currency: 'CNY',
-                        email: data.email,
-                    });
-                })
-            });
+        //         stripePay(function (data) {
+        //             stripePaymentAmount = data.amount
+        //             sn = data.sn
+        //             // Open Checkout with further options:
+        //             handler.open({
+        //                 name: 'Our Awesome SSR',
+        //                 description: '{{$goods->name}}',
+        //                 amount: data.amount,
+        //                 currency: 'CNY',
+        //                 email: data.email,
+        //             });
+        //         })
+        //     });
             document.getElementById('paymentBtns').style.display = null;
         })
 
@@ -256,11 +248,11 @@
         }
 
         // Stripe payment
-        function stripePay(successFunc) {
-            createPayment('stripe', function (data) {
-                return successFunc(data)
-            })
-        }
+        // function stripePay(successFunc) {
+        //     createPayment('stripe', function (data) {
+        //         return successFunc(data)
+        //     })
+        // }
 
         // 在线支付
         function onlinePay() {
