@@ -1,5 +1,6 @@
 /node_modules
 /public/upload
+/public/pdf
 /storage/framework/cache
 /storage/framework/sessions
 /storage/framework/views
